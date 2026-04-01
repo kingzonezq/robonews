@@ -150,7 +150,7 @@ async function loadNews(query) {
 {"news":[{"title":"标题（20字内）","source":"真实媒体名","time":"X小时前或X天前","summary":"2-3句客观摘要"}]}`;
 
   try {
-    const res = await fetch('/api/search', {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] })
