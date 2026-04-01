@@ -126,11 +126,10 @@
     const prompt = `你是机器人行业新闻编辑。请使用web_search工具搜索"${query}"相关的最新新闻（2024-2025年），整理出8条真实新闻。只返回以下JSON格式，不加任何说明：{"news":[{"title":"标题20字内","source":"真实媒体名","time":"X小时前或X天前","summary":"2-3句客观摘要"}]}`;
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('https://robonews-api.kingzonezq.workers.dev', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
           'anthropic-version': '2023-06-01',
           'anthropic-beta': 'web-search-2025-03-05',
         },
