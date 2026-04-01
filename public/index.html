@@ -1,1 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RoboNews · 机器人行业实时资讯</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fff; color: #111; min-height: 100vh; }
+    .header { border-bottom: 1px solid #e8e8e8; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; background: #fff; z-index: 10; }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon { width: 32px; height: 32px; background: #111; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .logo-name { font-size: 17px; font-weight: 600; }
+    .logo-tag { font-size: 11px; color: #888; margin-left: 4px; font-weight: 400; }
+    .refresh-btn { padding: 6px 14px; background: #111; color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; }
+    .refresh-btn:hover { background: #333; }
+    .tabs { display: flex; overflow-x: auto; border-bottom: 1px solid #e8e8e8; padding: 0 1.5rem; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { padding: 12px 14px; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; color: #888; white-space: nowrap; transition: all 0.15s; }
+    .tab:hover { color: #111; }
+    .tab.active { color: #111; border-bottom-color: #111; font-weight: 500; }
+    .search-row { display: flex; gap: 8px; padding: 12px 1.5rem; border-bottom: 1px solid #f0f0f0; }
+    .search-row input { flex: 1; padding: 8px 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; outline: none; }
+    .search-row input:focus { border-color: #999; }
+    .search-row button { padding: 8px 16px; background: #111; color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; }
+    .status-bar { display: none; align-items: center; gap: 12px; padding: 8px 1.5rem; background: #f8f8f8; border-bottom: 1px solid #efefef; font-size: 12px; color: #888; }
+    .status-bar.visible { display: flex; }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .content { padding: 1.25rem 1.5rem 3rem; max-width: 800px; margin: 0 auto; }
+    .news-grid { display: flex; flex-direction: column; gap: 10px; }
+    .news-card { border: 1px solid #ebebeb; border-radius: 12px; padding: 1rem 1.25rem; transition: border-color 0.15s; }
+    .news-card:hover { border-color: #ccc; }
+    .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+    .card-title { font-size: 15px; font-weight: 500; line-height: 1.45; flex: 1; }
+    .card-tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap; flex-shrink: 0; }
+    .tag-tech { background: #e6f1fb; color: #0C447C; }
+    .tag-industry { background: #eaf3de; color: #27500A; }
+    .tag-research { background: #EEEDFE; color: #3C3489; }
+    .tag-policy { background: #FAEEDA; color: #633806; }
+    .card-meta { font-size: 12px; color: #999; display: flex; gap: 6px; }
+    .card-source { font-weight: 500; color: #555; }
+    .card-summary { font-size: 13px; color: #555; line-height: 1.65; margin-top: 7px; }
+    .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 4rem 1rem; }
+    .spinner { width: 26px; height: 26px; border: 2px solid #e0e0e0; border-top-color: #111; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading p { font-size: 13px; color: #999; }
+    .message { text-align: center; padding: 4rem 1rem; font-size: 14px; color: #999; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">🤖</div>
+    <span class="logo-name">RoboNews<span class="logo-tag">机器人实时资讯</span></span>
+  </div>
+  <button class="refresh-btn" onclick="loadNews(currentTopic)">↻ 刷新</button>
+</header>
+
+<nav class="tabs" id="tabs">
+  <div class="tab active" data-topic="机器人最新动态 2025">全部动态</div>
+  <div class="tab" data-topic="人形机器人 humanoid robot 2025">人形机器人</div>
+  <div class="tab" data-topic="工业机器人 自动化 2025">工业自动化</div>
+  <div class="tab" data-topic="AI机器人 人工智能机器人 最新">AI 与机器人</div>
+  <div class="tab" data-topic="机器人政策法规 监管 2025">政策法规</div>
+</nav>
+
+<div class="search-row">
+  <input id="q" type="text" placeholder="搜索：波士顿动力、特斯拉 Optimus、宇树科技…" />
+  <button onclick="customSearch()">搜索</button>
+</div>
+
+<div class="status-bar" id="status-bar">
+  <div class="live-dot"></div>
+  <span id="stat-count">0</span> 条资讯
+  <span>·</span> 更新于 <span id="stat-time">-</span>
+  <span>·</span> 由 Claude AI 实时搜索
+</div>
+
+<main class="content">
+  <div class="loading" id="loading"><div class="spinner"></div><p>AI 正在搜索最新机器人新闻…</p></div>
+  <div id="news-list" style="display:none"><div class="news-grid" id="news-grid"></div></div>
+  <div class="message" id="msg" style="display:none"></div>
+</main>
+
+<script>
+  // ⚠️ 请把下面的 YOUR_API_KEY 替换成你的真实 API Key
+  const API_KEY = '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';
+
+  let currentTopic = '机器人最新动态 2025';
+
+  document.getElementById('tabs').addEventListener('click', e => {
+    const tab = e.target.closest('.tab');
+    if (!tab) return;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTopic = tab.dataset.topic;
+    loadNews(currentTopic);
+  });
+
+  document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') customSearch(); });
+
+  function customSearch() {
+    const v = document.getElementById('q').value.trim();
+    if (!v) return;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    currentTopic = v;
+    loadNews(v);
+  }
+
+  function tagFor(title, summary) {
+    const t = (title + summary).toLowerCase();
+    if (t.includes('政策') || t.includes('法规') || t.includes('监管')) return {l:'政策',c:'tag-policy'};
+    if (t.includes('研究') || t.includes('论文') || t.includes('大学')) return {l:'研究',c:'tag-research'};
+    if (t.includes('工厂') || t.includes('制造') || t.includes('工业')) return {l:'工业',c:'tag-industry'};
+    return {l:'科技',c:'tag-tech'};
+  }
+
+  async function loadNews(query) {
+    document.getElementById('loading').style.display = 'flex';
+    document.getElementById('news-list').style.display = 'none';
+    document.getElementById('msg').style.display = 'none';
+    document.getElementById('status-bar').classList.remove('visible');
+
+    const prompt = `你是机器人行业新闻编辑。请使用web_search工具搜索"${query}"相关的最新新闻（2024-2025年），整理出8条真实新闻。只返回以下JSON格式，不加任何说明：{"news":[{"title":"标题20字内","source":"真实媒体名","time":"X小时前或X天前","summary":"2-3句客观摘要"}]}`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY,
+          'anthropic-version': '2023-06-01',
+          'anthropic-beta': 'web-search-2025-03-05',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+
+      const data = await res.json();
+      const raw = (data.content || []).map(i => i.text || '').join('');
+      const s = raw.indexOf('{'), e = raw.lastIndexOf('}');
+      if (s === -1) { showMsg('未找到相关资讯，请换个关键词试试'); return; }
+      const parsed = JSON.parse(raw.slice(s, e + 1));
+      const news = parsed.news || [];
+
+      if (!news.length) { showMsg('未找到相关资讯，请换个关键词试试'); return; }
+
+      const grid = document.getElementById('news-grid');
+      grid.innerHTML = '';
+      news.forEach(item => {
+        const tag = tagFor(item.title, item.summary || '');
+        const card = document.createElement('div');
+        card.className = 'news-card';
+        card.innerHTML = `
+          <div class="card-header">
+            <div class="card-title">${item.title}</div>
+            <span class="card-tag ${tag.c}">${tag.l}</span>
+          </div>
+          <div class="card-meta">
+            <span class="card-source">${item.source}</span>
+            <span>·</span><span>${item.time}</span>
+          </div>
+          ${item.summary ? `<div class="card-summary">${item.summary}</div>` : ''}
+        `;
+        grid.appendChild(card);
+      });
+
+      document.getElementById('stat-count').textContent = news.length;
+      document.getElementById('stat-time').textContent = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+      document.getElementById('status-bar').classList.add('visible');
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('news-list').style.display = 'block';
+
+    } catch (err) {
+      showMsg('加载失败：' + err.message);
+    }
+  }
+
+  function showMsg(text) {
+    document.getElementById('loading').style.display = 'none';
+    const el = document.getElementById('msg');
+    el.textContent = text;
+    el.style.display = 'block';
+  }
+
+  loadNews(currentTopic);
+</script>
+</body>
+</html>
 
