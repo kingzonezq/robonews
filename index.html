@@ -85,9 +85,7 @@
 </main>
 
 <script>
-  // ⚠️ 请把下面的 YOUR_API_KEY 替换成你的真实 API Key
-  const API_KEY = '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';
-
+  const WORKER_URL = 'https://robonews-api.kingzonezq.workers.dev';
   let currentTopic = '机器人最新动态 2025';
 
   document.getElementById('tabs').addEventListener('click', e => {
@@ -126,18 +124,11 @@
     const prompt = `你是机器人行业新闻编辑。请使用web_search工具搜索"${query}"相关的最新新闻（2024-2025年），整理出8条真实新闻。只返回以下JSON格式，不加任何说明：{"news":[{"title":"标题20字内","source":"真实媒体名","time":"X小时前或X天前","summary":"2-3句客观摘要"}]}`;
 
     try {
-      const res = await fetch('https://robonews-api.kingzonezq.workers.dev', {
+      const res = await fetch(WORKER_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'anthropic-version': '2023-06-01',
-          'anthropic-beta': 'web-search-2025-03-05',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-          messages: [{ role: 'user', content: prompt }],
+          messages: [{ role: 'user', content: prompt }]
         }),
       });
 
