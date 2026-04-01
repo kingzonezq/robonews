@@ -134,10 +134,14 @@
 
       const data = await res.json();
       const raw = (data.content || []).map(i => i.text || '').join('');
-      const s = raw.indexOf('{'), e = raw.lastIndexOf('}');
-      if (s === -1) { showMsg('未找到相关资讯，请换个关键词试试'); return; }
-      const parsed = JSON.parse(raw.slice(s, e + 1));
-      const news = parsed.news || [];
+console.log('原始返回:', raw); // 调试用
+if (!raw) { showMsg('API返回为空: ' + JSON.stringify(data)); return; }
+const s = raw.indexOf('{'), e = raw.lastIndexOf('}');
+if (s === -1) { showMsg('无JSON: ' + raw.substring(0, 200)); return; }
+let parsed;
+try { parsed = JSON.parse(raw.slice(s, e + 1)); } 
+catch(err) { showMsg('JSON解析失败: ' + raw.substring(0, 200)); return; }
+const news = parsed.news || [];
 
       if (!news.length) { showMsg('未找到相关资讯，请换个关键词试试'); return; }
 
