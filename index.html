@@ -146,6 +146,9 @@ async function loadNews(query) {
       const searchUrl = 'https://www.baidu.com/s?wd=' + encodeURIComponent(item.title + ' ' + item.source);
       card.style.cursor = 'pointer';
       card.onclick = function() { window.open(searchUrl, '_blank'); };
+    const searchUrl = 'https://www.baidu.com/s?wd=' + encodeURIComponent(item.title + ' ' + item.source);
+      card.style.cursor = 'pointer';
+      card.onclick = function() { window.open(searchUrl, '_blank'); };
       card.innerHTML = '<div class="card-header"><div class="card-title">' + item.title + '</div><span class="card-tag ' + tag.c + '">' + tag.l + '</span></div><div class="card-meta"><span class="card-source">' + item.source + '</span><span>·</span><span>' + item.time + '</span></div>' + (item.summary ? '<div class="card-summary">' + item.summary + '</div>' : '');
       grid.appendChild(card);
     });
