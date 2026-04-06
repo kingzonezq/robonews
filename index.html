@@ -136,6 +136,23 @@ async function loadNews(query) {
     const e = raw.lastIndexOf('}');
     if (s === -1 || e === -1) { showMsg('格式错误，请刷新重试'); return; }
 
+    let parsed;
+    try {
+      parsed = JSON.parse(raw.slice(s, e + 1));
+    } catch(err) {
+      // JSON解析失败，尝试提取news数组
+      const newsMatch = raw.match(/"news"\s*:\s*\[[\s\S]*\]/);
+      if (newsMatch) {
+        try { parsed = JSON.parse('{"' + newsMatch[0] + '}'); } catch(e2) { showMsg('解析失败，请刷新重试'); return; }
+      } else { showMsg('解析失败，请刷新重试'); return; }
+    }
+    const news = parsed.news || [];
+    if (!raw) { showMsg('返回内容为空，请刷新重试'); return; }
+
+    const s = raw.indexOf('{');
+    const e = raw.lastIndexOf('}');
+    if (s === -1 || e === -1) { showMsg('格式错误，请刷新重试'); return; }
+
     const parsed = JSON.parse(raw.slice(s, e + 1));
     const news = parsed.news || [];
     if (!news.length) { showMsg('暂无资讯，请换个关键词'); return; }
