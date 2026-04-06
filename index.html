@@ -119,17 +119,7 @@ async function loadNews(query) {
 
     if (!res.ok) { showMsg('请求失败: HTTP ' + res.status); return; }
 
-    const text = await res.text();
-    
-    // 先解析外层Worker返回
-    let raw = '';
-    try {
-      const outer = JSON.parse(text);
-      raw = (outer.content || []).map(function(i) { return i.text || ''; }).join('').trim();
-    } catch(e) {
-      raw = text.trim();
-    }
-
+    const raw = (await res.text()).trim();
     if (!raw) { showMsg('返回内容为空，请刷新重试'); return; }
 
     // 提取JSON
